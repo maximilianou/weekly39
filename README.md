@@ -237,3 +237,149 @@ services:
 }
 ```
 
+---
+---
+---
+### kubernetes k3d
+
+---
+- k3d - install as root in /usr/local/bin
+```
+root@instrument:~# curl -s https://raw.githubusercontent.com/rancher/k3d/main/install.sh | bash
+Preparing to install k3d into /usr/local/bin
+k3d installed into /usr/local/bin/k3d
+Run 'k3d --help' to see what you can do with it.
+```
+---
+- kubectl - install in /usr/local/bin
+```
+root@instrument:~# curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+root@instrument:~# chmod +x kubectl 
+root@instrument:~# chown maximilianou:maximilianou kubectl
+root@instrument:~# cp kubectl /usr/local/bin
+```
+
+---
+- k3d - create cluster
+```
+:~/projects/weekly39$ k3d cluster create one-cluster
+INFO[0000] Prep: Network                                
+INFO[0000] Created network 'k3d-one-cluster' (416acb2be5f503456ce9487be19a28d031fdea9efbbb9991344c3fa8e8333ae2) 
+INFO[0000] Created volume 'k3d-one-cluster-images'      
+INFO[0001] Creating node 'k3d-one-cluster-server-0'     
+INFO[0004] Pulling image 'docker.io/rancher/k3s:v1.20.6-k3s1' 
+INFO[0013] Creating LoadBalancer 'k3d-one-cluster-serverlb' 
+INFO[0016] Pulling image 'docker.io/rancher/k3d-proxy:v4.4.3' 
+INFO[0022] Starting cluster 'one-cluster'               
+INFO[0022] Starting servers...                          
+INFO[0022] Starting Node 'k3d-one-cluster-server-0'     
+INFO[0027] Starting agents...                           
+INFO[0027] Starting helpers...                          
+INFO[0027] Starting Node 'k3d-one-cluster-serverlb'     
+INFO[0028] (Optional) Trying to get IP of the docker host and inject it into the cluster as 'host.k3d.internal' for easy access 
+INFO[0031] Successfully added host record to /etc/hosts in 2/2 nodes and to the CoreDNS ConfigMap 
+INFO[0031] Cluster 'one-cluster' created successfully!  
+INFO[0031] --kubeconfig-update-default=false --> sets --kubeconfig-switch-context=false 
+INFO[0032] You can now use it like this:                
+kubectl config use-context k3d-one-cluster
+kubectl cluster-info
+```
+
+---
+- check over docker
+```
+:~/projects/weekly39$ docker container ls
+CONTAINER ID   IMAGE                      COMMAND                  CREATED         STATUS         PORTS                                                                                            NAMES
+54fe77609adf   rancher/k3d-proxy:v4.4.3   "/bin/sh -c nginx-pr…"   2 minutes ago   Up 2 minutes   80/tcp, 0.0.0.0:45997->6443/tcp                                                                  k3d-one-cluster-serverlb
+e77cfa236553   rancher/k3s:v1.20.6-k3s1   "/bin/k3s server --t…"   2 minutes ago   Up 2 minutes                                                                                                    k3d-one-cluster-server-0
+```
+
+---
+- kubectl get pods -A
+```
+:~/projects/weekly39$ kubectl get pods -A
+NAMESPACE     NAME                                      READY   STATUS      RESTARTS   AGE
+kube-system   local-path-provisioner-5ff76fc89d-kd2zz   1/1     Running     0          4m19s
+kube-system   metrics-server-86cbb8457f-t9f2b           1/1     Running     0          4m19s
+kube-system   coredns-854c77959c-xgvjg                  1/1     Running     0          4m19s
+kube-system   helm-install-traefik-jbsl9                0/1     Completed   0          4m19s
+kube-system   svclb-traefik-zp98j                       2/2     Running     0          3m48s
+kube-system   traefik-6f9cbd9bd4-gt425                  1/1     Running     0          3m48s
+
+```
+
+---
+- kubectl get nodes
+```
+:~/projects/weekly39$ kubectl get nodes
+NAME                       STATUS   ROLES                  AGE   VERSION
+k3d-one-cluster-server-0   Ready    control-plane,master   15m   v1.20.6+k3s1
+```
+
+---
+- k3d cluster create two-cluster
+```
+:~/projects/weekly39$ k3d cluster create two-cluster --image rancher/k3s:v1.20.6-k3s1
+INFO[0000] Prep: Network                                
+INFO[0000] Re-using existing network 'k3d-two-cluster' (edf670c1b4a0e2212a049dc7af53337a9e24bcd5bbe17cb3775da33731bfb50a) 
+INFO[0000] Created volume 'k3d-two-cluster-images'      
+INFO[0001] Creating node 'k3d-two-cluster-server-0'     
+INFO[0001] Creating LoadBalancer 'k3d-two-cluster-serverlb' 
+INFO[0001] Starting cluster 'two-cluster'               
+INFO[0001] Starting servers...                          
+INFO[0001] Starting Node 'k3d-two-cluster-server-0'     
+INFO[0006] Starting agents...                           
+INFO[0006] Starting helpers...                          
+INFO[0006] Starting Node 'k3d-two-cluster-serverlb'     
+INFO[0007] (Optional) Trying to get IP of the docker host and inject it into the cluster as 'host.k3d.internal' for easy access 
+INFO[0010] Successfully added host record to /etc/hosts in 2/2 nodes and to the CoreDNS ConfigMap 
+INFO[0010] Cluster 'two-cluster' created successfully!  
+INFO[0010] --kubeconfig-update-default=false --> sets --kubeconfig-switch-context=false 
+INFO[0011] You can now use it like this:                
+kubectl config use-context k3d-two-cluster
+kubectl cluster-info
+```
+
+---
+- docker container ls
+```
+:~/projects/weekly39$ docker container ls
+CONTAINER ID   IMAGE                      COMMAND                  CREATED          STATUS          PORTS                                                                                            NAMES
+f7703ecea546   rancher/k3d-proxy:v4.4.3   "/bin/sh -c nginx-pr…"   4 minutes ago    Up 4 minutes    80/tcp, 0.0.0.0:36329->6443/tcp                                                                  k3d-two-cluster-serverlb
+ccd6ec0acba6   rancher/k3s:v1.20.6-k3s1   "/bin/k3s server --t…"   4 minutes ago    Up 4 minutes                                                                                                     k3d-two-cluster-server-0
+54fe77609adf   rancher/k3d-proxy:v4.4.3   "/bin/sh -c nginx-pr…"   23 minutes ago   Up 23 minutes   80/tcp, 0.0.0.0:45997->6443/tcp                                                                  k3d-one-cluster-serverlb
+e77cfa236553   rancher/k3s:v1.20.6-k3s1   "/bin/k3s server --t…"   24 minutes ago   Up 23 minutes                                                                                                    k3d-one-cluster-server-0
+```
+
+---
+- k3d cluster delete one-cluster
+```
+:~/projects/weekly39$ k3d cluster delete one-cluster
+INFO[0000] Deleting cluster 'one-cluster'               
+INFO[0000] Deleted k3d-one-cluster-serverlb             
+INFO[0001] Deleted k3d-one-cluster-server-0             
+INFO[0001] Deleting cluster network 'k3d-one-cluster'   
+INFO[0001] Deleting image volume 'k3d-one-cluster-images' 
+INFO[0001] Removing cluster details from default kubeconfig... 
+INFO[0001] Removing standalone kubeconfig file (if there is one)... 
+INFO[0001] Successfully deleted cluster one-cluster! 
+```
+
+---
+- k3d cluster delete two-cluster
+```
+:~/projects/weekly39$ k3d cluster delete two-cluster
+INFO[0000] Deleting cluster 'two-cluster'               
+INFO[0000] Deleted k3d-two-cluster-serverlb             
+INFO[0001] Deleted k3d-two-cluster-server-0             
+INFO[0001] Deleting image volume 'k3d-two-cluster-images' 
+INFO[0001] Removing cluster details from default kubeconfig... 
+INFO[0001] Removing standalone kubeconfig file (if there is one)... 
+INFO[0001] Successfully deleted cluster two-cluster! 
+```
+
+---
+- 
+```
+
+```
