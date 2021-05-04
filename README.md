@@ -379,7 +379,20 @@ INFO[0001] Successfully deleted cluster two-cluster!
 ```
 
 ---
-- 
+- docker registry https://hub.docker.com/_/registry
+Run a local registry: Quick Version
+```
+$ docker run -d -p 5000:5000 --restart always --name registry registry:2
+```
+Now, use it from within Docker:
+```
+$ docker pull ubuntu
+$ docker tag ubuntu localhost:5000/ubuntu
+$ docker push localhost:5000/ubuntu
 ```
 
+---
+- skafold init ( skaffold init alpha version --generate-manifests )
+```
+:~/projects/weekly39/k8s$ skaffold init --generate-manifests
 ```
